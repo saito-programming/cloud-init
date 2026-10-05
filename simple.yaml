@@ -1,0 +1,20 @@
+#cloud-config
+hostname: my-debian
+timezone: Asia/Tokyo
+
+# ユーザーの作成・設定
+users:
+  - name: taro
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    plain_text_passwd: 'password'
+
+# コンテナ起動時に自動インストールするパッケージ
+packages:
+  - sudo
+  - curl
+  - micro
+
+# SSHでパスワードログインを許可する場合
+ssh_pwauth: true
