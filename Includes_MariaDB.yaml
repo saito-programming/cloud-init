@@ -1,0 +1,45 @@
+#cloud-config
+hostname: my-debian
+timezone: Asia/Tokyo
+
+# ユーザーの作成・設定
+users:
+  - name: taro
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    plain_text_passwd: 'password'
+
+# パッケージ（MariaDB含む）
+packages:
+  - sudo
+  - curl
+  - git
+  - zoxide
+  - default-mysql-server
+
+# SSH設定
+ssh_pwauth: true
+
+# 初回起動時に実行するコマンド
+runcmd:
+  - sh -c "curl https://getmic.ro | bash && mv micro /usr/local/bin/"
+  - sudo -u taro git clone --depth 1 https://github.com/junegunn/fzf.git /home/taro/.fzf
+  - sudo -u taro /home/taro/.fzf/install --all
+  - sudo -u taro sh -c "echo 'eval \"\$(zoxide init bash)\"' >> /home/taro/.bashrc"
+
+  # MariaDB の初期化
+  - |
+    DB_PASS=$(openssl rand -base64 18)
+    
+    systemctl start mariadb
+
+    mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('$DB_PASS'); FLUSH PRIVILEGES;"
+
+    cat <<EOT > /home/taro/.my.cnf
+    [client]
+    user=root
+    password='$DB_PASS'
+    EOT
+    chmod 600 /home/taro/.my.cnf
+    chown taro:taro /home/taro/.my.cnf
